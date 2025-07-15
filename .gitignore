@@ -1,0 +1,11 @@
+# Byte-compiled
+__pycache__/
+
+# Virtual environment
+.venv/
+
+# macOS metadata
+.DS_Store
+
+## Environment variables
+.env
