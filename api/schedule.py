@@ -9,7 +9,7 @@ from models.user import User
 router = APIRouter(prefix="/schedules")
 
 
-@router.get("/", response_model=List[ScheduleOut])
+@router.get("", response_model=List[ScheduleOut])
 async def get_schedules(user: User = Depends(get_current_user)):
     schedules = (
         await Schedule.filter(user=user).prefetch_related("days", "exclusions").all()
@@ -17,7 +17,7 @@ async def get_schedules(user: User = Depends(get_current_user)):
     return [ScheduleOut.from_orm(s) for s in schedules]
 
 
-@router.post("/", response_model=ScheduleOut)
+@router.post("", response_model=ScheduleOut)
 async def create_schedule(data: ScheduleIn, user: User = Depends(get_current_user)):
     schedule = await Schedule.create(
         user=user,
