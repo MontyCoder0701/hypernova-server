@@ -39,7 +39,7 @@ app.add_middleware(
 
 
 ## TODO: 메서드, 클래스, 엔드포인트 main에서 전부 분리
-def create_access_token(data: dict):
+def create_access_token(data: dict) -> str:
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -82,7 +82,7 @@ class LoginInput(BaseModel):
 
 
 @app.post("/token")
-def login(data: LoginInput):
+def login(data: LoginInput) -> dict[str, str]:
     if data.id != "hypernova":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid ID"
@@ -93,7 +93,7 @@ def login(data: LoginInput):
 
 
 @app.get("/schedules", response_model=List[ScheduleOut])
-async def read_schedules(user: User = Depends(get_current_user)):
+async def read_schedules(user: User = Depends(get_current_user)) -> List[ScheduleOut]:
     schedules = await Schedule.filter(user=user)
     return schedules
 
