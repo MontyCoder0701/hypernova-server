@@ -8,7 +8,7 @@ import uvicorn
 from dotenv import load_dotenv
 
 import os
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import List
 
 from models import User, Schedule
@@ -69,15 +69,32 @@ class ScheduleIn(BaseModel):
     start_date: date
 
 
-class ScheduleOut(ScheduleIn):
+class ScheduleDayOut(BaseModel):
+    day: str
+
+    class Config:
+        from_attributes = True
+
+
+class ScheduleExclusionOut(BaseModel):
+    datetime: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ScheduleOut(BaseModel):
     id: int
-    days: List[str] = Field(..., example=["월", "수", "금"])
     time: str = Field(..., example="14:00:00")
-    is_active: bool = True
     start_date: date
+    days: List[ScheduleDayOut]
+    exclusions: List[ScheduleExclusionOut]
+
+    class Config:
+        from_attributes = True
 
     @classmethod
-    def from_orm(cls, obj: Schedule) -> "ScheduleOut":
+    def from_orm(cls, obj) -> "ScheduleOut":
         td: timedelta = obj.time
         total_seconds = int(td.total_seconds())
         hours = total_seconds // 3600
@@ -87,10 +104,10 @@ class ScheduleOut(ScheduleIn):
 
         return cls(
             id=obj.id,
-            days=obj.days,
             time=time_str,
-            is_active=obj.is_active,
             start_date=obj.start_date,
+            days=[ScheduleDayOut.model_validate(d) for d in obj.days],
+            exclusions=[ScheduleExclusionOut.model_validate(e) for e in obj.exclusions],
         )
 
 
@@ -111,7 +128,9 @@ def login(data: LoginInput) -> dict[str, str]:
 
 @app.get("/schedules", response_model=List[ScheduleOut])
 async def get_schedules(user: User = Depends(get_current_user)):
-    schedules = await Schedule.filter(user=user)
+    schedules = (
+        await Schedule.filter(user=user).prefetch_related("days", "exclusions").all()
+    )
     return [ScheduleOut.from_orm(s) for s in schedules]
 
 

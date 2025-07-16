@@ -7,10 +7,24 @@ if TYPE_CHECKING:
 
 class Schedule(Model):
     id = fields.IntField(pk=True)
-    days = fields.JSONField()
     time = fields.TimeField()
-    is_active = fields.BooleanField(default=True)
     start_date = fields.DateField()
     user: fields.ForeignKeyRelation["User"] = fields.ForeignKeyField(
         "models.User", related_name="schedules", on_delete=fields.CASCADE
+    )
+
+
+class ScheduleDay(Model):
+    id = fields.IntField(pk=True)
+    day = fields.CharField(max_length=9)
+    schedule: fields.ForeignKeyRelation[Schedule] = fields.ForeignKeyField(
+        "models.Schedule", related_name="days", on_delete=fields.CASCADE
+    )
+
+
+class ScheduleExclusion(Model):
+    id = fields.IntField(pk=True)
+    datetime = fields.DatetimeField()
+    schedule: fields.ForeignKeyRelation[Schedule] = fields.ForeignKeyField(
+        "models.Schedule", related_name="exclusions", on_delete=fields.CASCADE
     )
