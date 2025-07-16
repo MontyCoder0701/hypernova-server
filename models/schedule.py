@@ -9,6 +9,7 @@ class Schedule(Model):
     id = fields.IntField(pk=True)
     time = fields.TimeField()
     start_date = fields.DateField()
+    end_date = fields.DateField(null=True)
     user: fields.ForeignKeyRelation["User"] = fields.ForeignKeyField(
         "models.User", related_name="schedules", on_delete=fields.CASCADE
     )

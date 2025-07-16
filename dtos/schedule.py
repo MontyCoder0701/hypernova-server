@@ -1,0 +1,63 @@
+from datetime import date, time, timedelta, datetime
+from typing import List, Optional
+
+from pydantic import BaseModel
+
+
+class ScheduleExclusionIn(BaseModel):
+    datetime: datetime
+
+
+class ScheduleExclusionOut(BaseModel):
+    datetime: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ScheduleDayOut(BaseModel):
+    day: str
+
+    class Config:
+        from_attributes = True
+
+
+class ScheduleIn(BaseModel):
+    time: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    days: Optional[List[str]] = None
+
+
+class ScheduleOut(BaseModel):
+    id: int
+    time: time
+    start_date: date
+    end_date: Optional[date] = None
+    days: List[ScheduleDayOut]
+    exclusions: List[ScheduleExclusionOut]
+
+    class Config:
+        from_attributes = True
+
+    @classmethod
+    def from_orm(cls, obj) -> "ScheduleOut":
+        time_value = obj.time
+
+        if isinstance(time_value, timedelta):
+            total_seconds = int(time_value.total_seconds())
+            hours = (total_seconds // 3600) % 24
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            parsed_time = time(hour=hours, minute=minutes, second=seconds)
+        else:
+            parsed_time = time_value
+
+        return cls(
+            id=obj.id,
+            time=parsed_time,
+            start_date=obj.start_date,
+            end_date=obj.end_date,
+            days=[ScheduleDayOut.model_validate(d) for d in obj.days],
+            exclusions=[ScheduleExclusionOut.model_validate(e) for e in obj.exclusions],
+        )
