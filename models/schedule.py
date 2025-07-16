@@ -17,6 +17,7 @@ class Schedule(Model):
 
 class ScheduleDay(Model):
     id = fields.IntField(pk=True)
+    ## TODO: use enum
     day = fields.CharField(max_length=9)
     schedule: fields.ForeignKeyRelation[Schedule] = fields.ForeignKeyField(
         "models.Schedule", related_name="days", on_delete=fields.CASCADE

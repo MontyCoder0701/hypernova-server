@@ -22,6 +22,7 @@ class ScheduleDayOut(BaseModel):
         from_attributes = True
 
 
+## TODO: make different dto for patch and create
 class ScheduleIn(BaseModel):
     time: Optional[str] = None
     start_date: Optional[date] = None
