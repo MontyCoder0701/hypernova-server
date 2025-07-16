@@ -11,7 +11,7 @@ import os
 from datetime import date
 from typing import List
 
-from models.schedule import Schedule
+from models import User, Schedule
 
 load_dotenv()
 
@@ -43,19 +43,23 @@ def create_access_token(data: dict):
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def verify_token(token: str):
+def verify_token(token: str) -> str:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
-        if username != "hypernova":
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+        if not username:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        return username
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    verify_token(token)
-    return "hypernova"
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+    username = verify_token(token)
+    user = await User.get_or_none(username=username)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
 
 
 class ScheduleIn(BaseModel):
@@ -89,8 +93,8 @@ def login(data: LoginInput):
 
 
 @app.get("/schedules", response_model=List[ScheduleOut])
-async def read_schedules(user: str = Depends(get_current_user)):
-    schedules = await Schedule.all()
+async def read_schedules(user: User = Depends(get_current_user)):
+    schedules = await Schedule.filter(user=user)
     return schedules
 
 
