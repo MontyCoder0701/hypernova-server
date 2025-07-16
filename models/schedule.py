@@ -1,8 +1,19 @@
+from enum import IntEnum
 from tortoise import Model, fields
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .user import User
+
+
+class Weekday(IntEnum):
+    MON = 0
+    TUE = 1
+    WED = 2
+    THU = 3
+    FRI = 4
+    SAT = 5
+    SUN = 6
 
 
 class Schedule(Model):
@@ -17,8 +28,7 @@ class Schedule(Model):
 
 class ScheduleDay(Model):
     id = fields.IntField(pk=True)
-    ## TODO: use enum
-    day = fields.CharField(max_length=9)
+    day = fields.IntEnumField(enum_type=Weekday)
     schedule: fields.ForeignKeyRelation[Schedule] = fields.ForeignKeyField(
         "models.Schedule", related_name="days", on_delete=fields.CASCADE
     )

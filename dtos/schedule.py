@@ -3,6 +3,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from models.schedule import Weekday
+
 
 class ScheduleExclusionIn(BaseModel):
     datetime: datetime
@@ -27,7 +29,7 @@ class ScheduleIn(BaseModel):
     time: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
-    days: Optional[List[str]] = None
+    days: Optional[List[Weekday]] = None
 
 
 class ScheduleOut(BaseModel):
