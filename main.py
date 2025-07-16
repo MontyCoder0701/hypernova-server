@@ -97,7 +97,7 @@ async def read_schedules(user: str = Depends(get_current_user)):
 register_tortoise(
     app,
     db_url=DB_URL,
-    modules={"models": ["models.schedule"]},
+    modules={"models": ["models"]},
     add_exception_handlers=True,
     ## WARN: Disable in production
     # generate_schemas=True,
