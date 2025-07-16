@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, Field
 from tortoise.contrib.fastapi import register_tortoise
@@ -73,9 +73,18 @@ class ScheduleOut(ScheduleIn):
     start_date: date
 
 
+class LoginInput(BaseModel):
+    id: str
+
+
 @app.post("/token")
-def login():
-    access_token = create_access_token(data={"sub": "hypernova"})
+def login(data: LoginInput):
+    if data.id != "hypernova":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid ID"
+        )
+
+    access_token = create_access_token(data={"sub": data.id})
     return {"access_token": access_token, "token_type": "bearer"}
 
 
