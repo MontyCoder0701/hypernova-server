@@ -8,7 +8,7 @@ import uvicorn
 from dotenv import load_dotenv
 
 import os
-from datetime import date
+from datetime import date, timedelta
 from typing import List
 
 from models import User, Schedule
@@ -76,6 +76,23 @@ class ScheduleOut(ScheduleIn):
     is_active: bool = True
     start_date: date
 
+    @classmethod
+    def from_orm(cls, obj: Schedule) -> "ScheduleOut":
+        td: timedelta = obj.time
+        total_seconds = int(td.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        time_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+        return cls(
+            id=obj.id,
+            days=obj.days,
+            time=time_str,
+            is_active=obj.is_active,
+            start_date=obj.start_date,
+        )
+
 
 class LoginInput(BaseModel):
     id: str
@@ -93,9 +110,9 @@ def login(data: LoginInput) -> dict[str, str]:
 
 
 @app.get("/schedules", response_model=List[ScheduleOut])
-async def read_schedules(user: User = Depends(get_current_user)) -> List[ScheduleOut]:
+async def get_schedules(user: User = Depends(get_current_user)):
     schedules = await Schedule.filter(user=user)
-    return schedules
+    return [ScheduleOut.from_orm(s) for s in schedules]
 
 
 register_tortoise(
