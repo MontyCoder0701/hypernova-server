@@ -3,13 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
 
 from api import auth, schedule
-from core.config import DB_URL, FlUTTER_URL
+from core.config import DB_URL, FLUTTER_URL
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FlUTTER_URL],
+    allow_origins=[FLUTTER_URL],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
