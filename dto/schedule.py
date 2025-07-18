@@ -1,9 +1,9 @@
-from datetime import date, time, timedelta, datetime
+from datetime import time, timedelta, datetime
 from typing import List, Optional
 
 from pydantic import BaseModel
 
-from models.schedule import Weekday
+from model.schedule import Weekday
 
 
 class ScheduleExclusionIn(BaseModel):
@@ -24,8 +24,14 @@ class ScheduleDayOut(BaseModel):
         from_attributes = True
 
 
-## TODO: make different dto for patch and create
-class ScheduleIn(BaseModel):
+class ScheduleCreateIn(BaseModel):
+    time: str
+    start_datetime: datetime
+    end_datetime: Optional[datetime] = None
+    days: List[Weekday]
+
+
+class SchedulePatchIn(BaseModel):
     time: Optional[str] = None
     start_datetime: Optional[datetime] = None
     end_datetime: Optional[datetime] = None

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
 
-from api import auth, schedule
+from controller import auth, schedule
 from core.config import DB_URL, FLUTTER_URL
 
 app = FastAPI()
@@ -21,7 +21,7 @@ app.include_router(schedule.router)
 register_tortoise(
     app,
     db_url=DB_URL,
-    modules={"models": ["models"]},
+    modules={"models": ["model"]},
     add_exception_handlers=True,
     # generate_schemas=True  # only for dev
 )

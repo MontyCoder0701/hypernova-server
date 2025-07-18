@@ -2,7 +2,8 @@ from .schedule import (
     ScheduleExclusionIn,
     ScheduleExclusionOut,
     ScheduleDayOut,
-    ScheduleIn,
+    ScheduleCreateIn,
+    SchedulePatchIn,
     ScheduleOut,
 )
 from .auth import LoginInput
@@ -11,7 +12,8 @@ __all__ = [
     "ScheduleExclusionIn",
     "ScheduleExclusionOut",
     "ScheduleDayOut",
-    "ScheduleIn",
+    "ScheduleCreateIn",
+    "SchedulePatchIn",
     "ScheduleOut",
     "LoginInput",
 ]

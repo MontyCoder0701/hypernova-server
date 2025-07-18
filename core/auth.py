@@ -3,7 +3,7 @@ from jose import JWTError, jwt
 from fastapi import Depends, HTTPException
 
 from core.config import SECRET_KEY, ALGORITHM
-from models.user import User
+from model.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
