@@ -27,16 +27,16 @@ class ScheduleDayOut(BaseModel):
 ## TODO: make different dto for patch and create
 class ScheduleIn(BaseModel):
     time: Optional[str] = None
-    start_date: Optional[date] = None
-    end_date: Optional[date] = None
+    start_datetime: Optional[datetime] = None
+    end_datetime: Optional[datetime] = None
     days: Optional[List[Weekday]] = None
 
 
 class ScheduleOut(BaseModel):
     id: int
     time: time
-    start_date: date
-    end_date: Optional[date] = None
+    start_datetime: datetime
+    end_datetime: Optional[datetime] = None
     days: List[ScheduleDayOut]
     exclusions: List[ScheduleExclusionOut]
 
@@ -59,8 +59,8 @@ class ScheduleOut(BaseModel):
         return cls(
             id=obj.id,
             time=parsed_time,
-            start_date=obj.start_date,
-            end_date=obj.end_date,
+            start_datetime=obj.start_datetime,
+            end_datetime=obj.end_datetime,
             days=[ScheduleDayOut.model_validate(d) for d in obj.days],
             exclusions=[ScheduleExclusionOut.model_validate(e) for e in obj.exclusions],
         )

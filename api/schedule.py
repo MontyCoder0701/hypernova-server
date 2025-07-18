@@ -23,8 +23,8 @@ async def create_schedule(data: ScheduleIn, user: User = Depends(get_current_use
     schedule = await Schedule.create(
         user=user,
         time=data.time,
-        start_date=data.start_date,
-        end_date=data.end_date,
+        start_datetime=data.start_datetime,
+        end_datetime=data.end_datetime,
     )
 
     for day in data.days:
@@ -50,11 +50,11 @@ async def patch_schedule(
     if data.time is not None:
         schedule.time = data.time
 
-    if data.start_date is not None:
-        schedule.start_date = data.start_date
+    if data.start_datetime is not None:
+        schedule.start_datetime = data.start_datetime
 
-    if data.end_date is not None:
-        schedule.end_date = data.end_date
+    if data.end_datetime is not None:
+        schedule.end_datetime = data.end_datetime
 
     if data.days is not None:
         await ScheduleDay.filter(schedule=schedule).delete()
@@ -81,10 +81,10 @@ async def delete_schedule(
     schedule_days = await ScheduleDay.filter(schedule=schedule).values_list(
         "day", flat=True
     )
-    await Schedule.filter(id=schedule.id).update(end_date=yesterday)
+    await Schedule.filter(id=schedule.id).update(end_datetime=yesterday)
 
     one_time_schedules = await Schedule.filter(
-        user=user, start_date=F("end_date"), start_date__gte=date.today()
+        user=user, start_datetime=F("end_datetime"), start_datetime__gte=date.today()
     ).prefetch_related("days")
 
     for s in one_time_schedules:
