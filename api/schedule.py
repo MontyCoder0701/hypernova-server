@@ -95,8 +95,8 @@ async def delete_schedule(
             await s.delete()
 
 
-@router.post("/{schedule_id}/exclude")
-async def add_exclusion(
+@router.post("/{schedule_id}/exclude", response_model=ScheduleOut)
+async def createExclusion(
     schedule_id: int, data: ScheduleExclusionIn, user: User = Depends(get_current_user)
 ):
     schedule = await Schedule.get_or_none(id=schedule_id, user=user)
@@ -104,3 +104,5 @@ async def add_exclusion(
         raise HTTPException(status_code=404, detail="Schedule not found")
 
     await ScheduleExclusion.create(schedule=schedule, datetime=data.datetime)
+    await schedule.fetch_related("days", "exclusions")
+    return ScheduleOut.from_orm(schedule)
