@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
+from tortoise.expressions import F
 
 from core.auth import get_current_user
 from dtos.schedule import *
@@ -70,13 +71,28 @@ async def delete_schedule(
     schedule_id: int,
     user: User = Depends(get_current_user),
 ):
-    schedule = await Schedule.get_or_none(id=schedule_id, user=user)
+    schedule = await Schedule.get_or_none(id=schedule_id, user=user).prefetch_related(
+        "days"
+    )
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")
 
-    await ScheduleDay.filter(schedule=schedule).delete()
-    await schedule.exclusions.all().delete()
-    await schedule.delete()
+    yesterday = date.today() - timedelta(days=1)
+    schedule_days = await ScheduleDay.filter(schedule=schedule).values_list(
+        "day", flat=True
+    )
+    await Schedule.filter(id=schedule.id).update(end_date=yesterday)
+
+    one_time_schedules = await Schedule.filter(
+        user=user, start_date=F("end_date"), start_date__gte=date.today()
+    ).prefetch_related("days")
+
+    for s in one_time_schedules:
+        s_days = await ScheduleDay.filter(schedule=s).values_list("day", flat=True)
+        if any(day in schedule_days for day in s_days):
+            await ScheduleDay.filter(schedule=s).delete()
+            await s.exclusions.all().delete()
+            await s.delete()
 
 
 @router.post("/{schedule_id}/exclude")
