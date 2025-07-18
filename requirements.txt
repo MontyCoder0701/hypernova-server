@@ -1,5 +1,4 @@
-fastapi
-uvicorn
+fastapi[standard]
 tortoise-orm[aiomysql]
 python-jose
 dotenv
