@@ -1,8 +1,7 @@
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 from typing import List
 
 from fastapi import HTTPException
-from tortoise.expressions import F
 
 from dto.schedule import *
 from model.schedule import *
@@ -11,7 +10,9 @@ from model.user import User
 
 class ScheduleService:
     async def get_all(self, user: User) -> List[Schedule]:
-        return await Schedule.filter(user=user).prefetch_related("days", "exclusions")
+        return await Schedule.filter(user=user).prefetch_related(
+            "days", "exclusions", "time_modifications"
+        )
 
     async def create(self, data: ScheduleCreateIn, user: User) -> Schedule:
         schedule = await Schedule.create(
@@ -20,68 +21,89 @@ class ScheduleService:
             start_datetime=data.start_datetime,
             end_datetime=data.end_datetime,
         )
-        for day in data.days:
-            await ScheduleDay.create(schedule=schedule, day=day)
-        await schedule.fetch_related("days", "exclusions")
+
+        await ScheduleDay.bulk_create(
+            [ScheduleDay(schedule=schedule, day=day) for day in data.days]
+        )
+
+        await schedule.fetch_related("days", "exclusions", "time_modifications")
         return schedule
 
-    async def patch(
-        self, schedule_id: int, data: SchedulePatchIn, user: User
-    ) -> Schedule:
-        schedule = await Schedule.get_or_none(
-            id=schedule_id, user=user
-        ).prefetch_related("days", "exclusions")
-        if not schedule:
-            raise HTTPException(status_code=404, detail="Schedule not found")
-
-        if data.time is not None:
-            schedule.time = data.time
-        if data.start_datetime is not None:
-            schedule.start_datetime = data.start_datetime
-        if data.end_datetime is not None:
-            schedule.end_datetime = data.end_datetime
-        if data.days is not None:
-            await ScheduleDay.filter(schedule=schedule).delete()
-            for day in data.days:
-                await ScheduleDay.create(schedule=schedule, day=day)
-
-        await schedule.save()
-        await schedule.fetch_related("days", "exclusions")
-        return schedule
-
-    async def delete(self, schedule_id: int, user: User):
-        schedule = await Schedule.get_or_none(
-            id=schedule_id, user=user
-        ).prefetch_related("days")
+    async def delete(self, id: int, user: User):
+        schedule = await Schedule.get_or_none(id=id, user=user).prefetch_related(
+            "days", "exclusions", "time_modifications"
+        )
         if not schedule:
             raise HTTPException(status_code=404, detail="Schedule not found")
 
         yesterday = date.today() - timedelta(days=1)
-        schedule_days = await ScheduleDay.filter(schedule=schedule).values_list(
-            "day", flat=True
-        )
         await Schedule.filter(id=schedule.id).update(end_datetime=yesterday)
 
-        one_time_schedules = await Schedule.filter(
-            user=user,
-            start_datetime=F("end_datetime"),
-            start_datetime__gte=date.today(),
-        ).prefetch_related("days")
+    async def replace(
+        self, schedule_id: int, data: ScheduleReplaceIn, user: User
+    ) -> Schedule:
+        schedule = await Schedule.get_or_none(
+            id=schedule_id, user=user
+        ).prefetch_related("days", "exclusions", "time_modifications")
+        if not schedule:
+            raise HTTPException(status_code=404, detail="Schedule not found")
 
-        for s in one_time_schedules:
-            s_days = await ScheduleDay.filter(schedule=s).values_list("day", flat=True)
-            if any(day in schedule_days for day in s_days):
-                await ScheduleDay.filter(schedule=s).delete()
-                await s.exclusions.all().delete()
-                await s.delete()
+        schedule.end_datetime = date.today() - timedelta(days=1)
+        await schedule.save()
+
+        new_schedule = await Schedule.create(
+            user=user,
+            time=data.time,
+            start_datetime=datetime.now(),
+        )
+
+        days = data.days
+        await ScheduleDay.bulk_create(
+            [ScheduleDay(schedule=new_schedule, day=day) for day in days]
+        )
+
+        today = datetime.combine(date.today(), time.min)
+        mods = await ScheduleTimeModification.filter(
+            schedule=schedule,
+            datetime__gte=today,
+        ).all()
+        await ScheduleTimeModification.bulk_create(
+            [
+                ScheduleTimeModification(schedule=new_schedule, datetime=mod.datetime)
+                for mod in mods
+            ]
+        )
+
+        await new_schedule.fetch_related("days", "exclusions", "time_modifications")
+        return new_schedule
+
+    async def create_time_modification(
+        self, id: int, data: ScheduleTimeModificationIn, user: User
+    ) -> Schedule:
+        schedule = await Schedule.get_or_none(id=id, user=user)
+        if not schedule:
+            raise HTTPException(status_code=404, detail="Schedule not found")
+
+        day_start = datetime.combine(data.datetime, time.min)
+        day_end = day_start + timedelta(days=1)
+
+        await ScheduleTimeModification.update_or_create(
+            defaults={"datetime": data.datetime},
+            schedule=schedule,
+            datetime__gte=day_start,
+            datetime__lt=day_end,
+        )
+
+        await schedule.fetch_related("days", "exclusions", "time_modifications")
+        return schedule
 
     async def create_exclusion(
-        self, schedule_id: int, data: ScheduleExclusionIn, user: User
+        self, id: int, data: ScheduleExclusionIn, user: User
     ) -> Schedule:
-        schedule = await Schedule.get_or_none(id=schedule_id, user=user)
+        schedule = await Schedule.get_or_none(id=id, user=user)
         if not schedule:
             raise HTTPException(status_code=404, detail="Schedule not found")
 
         await ScheduleExclusion.create(schedule=schedule, datetime=data.datetime)
-        await schedule.fetch_related("days", "exclusions")
+        await schedule.fetch_related("days", "exclusions", "time_modifications")
         return schedule

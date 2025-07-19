@@ -27,32 +27,42 @@ async def create_schedule(
     return ScheduleOut.from_orm(schedule)
 
 
-@router.patch("/{schedule_id}", response_model=ScheduleOut)
-async def patch_schedule(
-    schedule_id: int,
-    data: SchedulePatchIn,
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_schedule(
+    id: int,
     user: User = Depends(get_current_user),
     service: ScheduleService = Depends(),
 ):
-    schedule = await service.patch(schedule_id, data, user)
+    await service.delete(id, user)
+
+
+@router.post("/{schedule_id}/replace", response_model=ScheduleOut)
+async def replace_schedule(
+    schedule_id: int,
+    data: ScheduleReplaceIn,
+    user: User = Depends(get_current_user),
+    service: ScheduleService = Depends(),
+):
+    return await service.replace(schedule_id, data, user)
+
+
+@router.post("/{id}/modify-time", response_model=ScheduleOut)
+async def create_time_modification(
+    id: int,
+    data: ScheduleTimeModificationIn,
+    user: User = Depends(get_current_user),
+    service: ScheduleService = Depends(),
+):
+    schedule = await service.create_time_modification(id, data, user)
     return ScheduleOut.from_orm(schedule)
 
 
-@router.delete("/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_schedule(
-    schedule_id: int,
-    user: User = Depends(get_current_user),
-    service: ScheduleService = Depends(),
-):
-    await service.delete(schedule_id, user)
-
-
-@router.post("/{schedule_id}/exclude", response_model=ScheduleOut)
+@router.post("/{id}/exclude", response_model=ScheduleOut)
 async def create_exclusion(
-    schedule_id: int,
+    id: int,
     data: ScheduleExclusionIn,
     user: User = Depends(get_current_user),
     service: ScheduleService = Depends(),
 ):
-    schedule = await service.create_exclusion(schedule_id, data, user)
+    schedule = await service.create_exclusion(id, data, user)
     return ScheduleOut.from_orm(schedule)

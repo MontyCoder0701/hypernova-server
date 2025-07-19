@@ -23,5 +23,5 @@ register_tortoise(
     db_url=DB_URL,
     modules={"models": ["model"]},
     add_exception_handlers=True,
-    # generate_schemas=True  # only for dev
+    # generate_schemas=True,  # only for dev
 )

@@ -25,6 +25,10 @@ class Schedule(Model):
         "models.User", related_name="schedules", on_delete=fields.CASCADE
     )
 
+    @property
+    def isOneTime(self) -> bool:
+        return self.start_datetime == self.end_datetime
+
 
 class ScheduleDay(Model):
     id = fields.IntField(pk=True)
@@ -39,4 +43,12 @@ class ScheduleExclusion(Model):
     datetime = fields.DatetimeField()
     schedule: fields.ForeignKeyRelation[Schedule] = fields.ForeignKeyField(
         "models.Schedule", related_name="exclusions", on_delete=fields.CASCADE
+    )
+
+
+class ScheduleTimeModification(Model):
+    id = fields.IntField(pk=True)
+    datetime = fields.DatetimeField()
+    schedule: fields.ForeignKeyRelation[Schedule] = fields.ForeignKeyField(
+        "models.Schedule", related_name="time_modifications", on_delete=fields.CASCADE
     )

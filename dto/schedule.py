@@ -1,5 +1,6 @@
-from datetime import time, timedelta, datetime
+from datetime import timedelta, datetime
 from typing import List, Optional
+from datetime import time as dt_time
 
 from pydantic import BaseModel
 
@@ -17,34 +18,49 @@ class ScheduleExclusionOut(BaseModel):
         from_attributes = True
 
 
+class ScheduleTimeModificationIn(BaseModel):
+    datetime: datetime
+
+
+class ScheduleTimeModificationOut(BaseModel):
+    datetime: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ScheduleTimeUpdateIn(BaseModel):
+    time: dt_time
+    datetime: datetime
+
+
 class ScheduleDayOut(BaseModel):
-    day: str
+    day: Weekday
 
     class Config:
         from_attributes = True
 
 
 class ScheduleCreateIn(BaseModel):
-    time: str
-    start_datetime: datetime
+    time: dt_time
+    start_datetime: Optional[datetime] = None
     end_datetime: Optional[datetime] = None
     days: List[Weekday]
 
 
-class SchedulePatchIn(BaseModel):
-    time: Optional[str] = None
-    start_datetime: Optional[datetime] = None
-    end_datetime: Optional[datetime] = None
+class ScheduleReplaceIn(BaseModel):
+    time: Optional[dt_time] = None
     days: Optional[List[Weekday]] = None
 
 
 class ScheduleOut(BaseModel):
     id: int
-    time: time
+    time: dt_time
     start_datetime: datetime
     end_datetime: Optional[datetime] = None
     days: List[ScheduleDayOut]
     exclusions: List[ScheduleExclusionOut]
+    time_modifications: List[ScheduleTimeModificationOut]
 
     class Config:
         from_attributes = True
@@ -58,7 +74,7 @@ class ScheduleOut(BaseModel):
             hours = (total_seconds // 3600) % 24
             minutes = (total_seconds % 3600) // 60
             seconds = total_seconds % 60
-            parsed_time = time(hour=hours, minute=minutes, second=seconds)
+            parsed_time = dt_time(hour=hours, minute=minutes, second=seconds)
         else:
             parsed_time = time_value
 
@@ -69,4 +85,8 @@ class ScheduleOut(BaseModel):
             end_datetime=obj.end_datetime,
             days=[ScheduleDayOut.model_validate(d) for d in obj.days],
             exclusions=[ScheduleExclusionOut.model_validate(e) for e in obj.exclusions],
+            time_modifications=[
+                ScheduleTimeModificationOut.model_validate(e)
+                for e in obj.time_modifications
+            ],
         )

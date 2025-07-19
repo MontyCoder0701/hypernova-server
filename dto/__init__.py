@@ -3,7 +3,7 @@ from .schedule import (
     ScheduleExclusionOut,
     ScheduleDayOut,
     ScheduleCreateIn,
-    SchedulePatchIn,
+    ScheduleReplaceIn,
     ScheduleOut,
 )
 from .auth import LoginInput
@@ -13,7 +13,7 @@ __all__ = [
     "ScheduleExclusionOut",
     "ScheduleDayOut",
     "ScheduleCreateIn",
-    "SchedulePatchIn",
+    "ScheduleReplaceIn",
     "ScheduleOut",
     "LoginInput",
 ]
