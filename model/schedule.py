@@ -25,10 +25,6 @@ class Schedule(Model):
         "models.User", related_name="schedules", on_delete=fields.CASCADE
     )
 
-    @property
-    def isOneTime(self) -> bool:
-        return self.start_datetime == self.end_datetime
-
 
 class ScheduleDay(Model):
     id = fields.IntField(pk=True)

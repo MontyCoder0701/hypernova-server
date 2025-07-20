@@ -6,7 +6,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
-FLUTTER_URL = os.getenv("FlUTTER_URL")
+FLUTTER_URL = os.getenv("FLUTTER_URL")
 
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
